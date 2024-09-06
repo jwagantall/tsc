@@ -36,7 +36,16 @@ Draft - [wiki](https://github.com/LFDT-Hiero/tsc/wiki/TSC-Discussion-Wiki)
 ## TSC Issues:
 Issues [Home](https://github.com/LFDT-Hiero/tsc/issues)
 
-1 - [Repo structure](https://github.com/LFDT-Hiero/tsc/issues/1)
+Issue | Status | Progress | Owner |
+|---------|----------|---------|-----------|
+ 1 [Repo structure](https://github.com/LFDT-Hiero/tsc/issues/1) | Open | New | Alex |
+
 
 ## KPIs:
-<iframe src="https://github.com/orgs/LFDT-Hiero/projects/3/views/1">,</iframe>
+[KPI Tracker](https://github.com/orgs/LFDT-Hiero/projects/3/views/1)
+
+KPI | Value | Goal | Owner | Last Edited
+-------|----------|---------|----|-----|
+ HIPs Approved Q3 2024 | 5 | 10 | Stoyan | 2024-09-05 |
+ HIPs Implemented in final build | 2 | 5 | George | 2024-09-04 |
+
