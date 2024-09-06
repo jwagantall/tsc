@@ -18,8 +18,7 @@ This repo serves to provide a structure for activity, discussions and decisions 
 ## Meeting Agendas:
 2024-09-03\
 2024-08-27\
-2024-08-20\
-
+2024-08-20
 
 ## Meeting Notes:
 ### Approved Meeting Notes:
