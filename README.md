@@ -11,14 +11,15 @@ This repo serves to provide a structure for activity, discussions and decisions 
 [Leemon Baird (perm)](https://github.com/lbaird)\
 [Stoyan Panayotov](https://github.com/Perseverance)\
 [George Spasov](https://github.com/Perseverance)\
-[Alexander Popowycz](https://github.com/popowycz)
+[Alexander Popowycz](https://github.com/popowycz)\
 
 ***
 
 ## Meeting Agendas:
 2024-09-03\
 2024-08-27\
-2024-08-20
+2024-08-20\
+
 
 ## Meeting Notes:
 ### Approved Meeting Notes:
@@ -29,7 +30,6 @@ This repo serves to provide a structure for activity, discussions and decisions 
 ### Draft Meeting Notes:
 2024-09-03
 
-
 ## Discussion Area:
 Draft - [wiki](https://github.com/LFDT-Hiero/tsc/wiki/TSC-Discussion-Wiki)
 
@@ -37,3 +37,6 @@ Draft - [wiki](https://github.com/LFDT-Hiero/tsc/wiki/TSC-Discussion-Wiki)
 Issues [Home](https://github.com/LFDT-Hiero/tsc/issues)
 
 1 - [Repo structure](https://github.com/LFDT-Hiero/tsc/issues/1)
+
+## KPIs:
+<iframe src="https://github.com/orgs/LFDT-Hiero/projects/3/views/1">,</iframe>
