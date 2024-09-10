@@ -1,7 +1,3 @@
-# TSC
-
-This is the private repository of the Technical Steering Committee (TSC)
-
 ## Overview:
 This repo serves to provide a structure for activity, discussions and decisions of the Hiero Technical Steering Committee, operating under the authority of the [Hiero Project Charter](https://github.com/LFDT-Hiero/hiero/blob/main/technical-charter.md).
 
@@ -15,20 +11,9 @@ This repo serves to provide a structure for activity, discussions and decisions 
 
 ***
 
-## Meeting Agendas:
-2024-09-03\
-2024-08-27\
-2024-08-20\
-
-
 ## Meeting Notes:
-### Approved Meeting Notes:
-
 [2024-08-20](https://github.com/LFDT-Hiero/tsc/blob/main/minutes/2024-08-20.md)\
 [2024-08-27](https://github.com/LFDT-Hiero/tsc/blob/main/minutes/2024-08-27.md)
-
-### Draft Meeting Notes:
-2024-09-03
 
 ## Discussion Area:
 Draft - [wiki](https://github.com/LFDT-Hiero/tsc/wiki/TSC-Discussion-Wiki)
@@ -36,16 +21,4 @@ Draft - [wiki](https://github.com/LFDT-Hiero/tsc/wiki/TSC-Discussion-Wiki)
 ## TSC Issues:
 Issues [Home](https://github.com/LFDT-Hiero/tsc/issues)
 
-Issue | Status | Progress | Owner |
-|---------|----------|---------|-----------|
- 1 [Repo structure](https://github.com/LFDT-Hiero/tsc/issues/1) | Open | New | Alex |
-
-
-## KPIs:
-[KPI Tracker](https://github.com/orgs/LFDT-Hiero/projects/3/views/1)
-
-KPI | Value | Goal | Owner | Last Edited
--------|----------|---------|----|-----|
- HIPs Approved Q3 2024 | 5 | 10 | Stoyan | 2024-09-05 |
- HIPs Implemented in final build | 2 | 5 | George | 2024-09-04 |
 
