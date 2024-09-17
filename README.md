@@ -7,7 +7,7 @@ This repo serves to provide a structure for activity, discussions and decisions 
 [Leemon Baird (perm)](https://github.com/lbaird)\
 [Stoyan Panayotov](https://github.com/Perseverance)\
 [George Spasov](https://github.com/Perseverance)\
-[Alexander Popowycz](https://github.com/popowycz)\
+[Alexander Popowycz](https://github.com/popowycz)
 
 ***
 
