@@ -12,11 +12,11 @@ This repo serves to provide a structure for activity, discussions and decisions 
 ***
 
 ## Meeting Notes:
-[2024-08-20](https://github.com/LFDT-Hiero/tsc/blob/main/minutes/2024-08-20.md)\
-[2024-08-27](https://github.com/LFDT-Hiero/tsc/blob/main/minutes/2024-08-27.md)
+
+The minutes of the TSC meetings can be found [here](https://github.com/hiero-ledger/tsc/tree/main/minutes)
 
 ## Discussion Area:
-Draft - [wiki](https://github.com/LFDT-Hiero/tsc/wiki/TSC-Discussion-Wiki)
+GitHub discussions - [wiki](https://github.com/orgs/hiero-ledger/discussions)
 
 ## TSC Issues:
 Issues [Home](https://github.com/LFDT-Hiero/tsc/issues)
