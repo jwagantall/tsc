@@ -1,5 +1,5 @@
 ## Overview:
-This repo serves to provide a structure for activity, discussions and decisions of the Hiero Technical Steering Committee, operating under the authority of the [Hiero Project Charter](https://github.com/LFDT-Hiero/hiero/blob/main/technical-charter.md).
+This repo serves to provide a structure for activity, discussions and decisions of the Hiero Technical Steering Committee, operating under the authority of the [Hiero Project Charter](https://github.com/hiero-ledger/hiero/blob/main/technical-charter.md).
 
 ## Members:
 [Hendrik Ebbers](https://github.com/hendrikebbers)\
@@ -19,6 +19,6 @@ The minutes of the TSC meetings can be found [here](https://github.com/hiero-led
 GitHub discussions - [wiki](https://github.com/orgs/hiero-ledger/discussions)
 
 ## TSC Issues:
-Issues [Home](https://github.com/LFDT-Hiero/tsc/issues)
+Issues [Home](https://github.com/hiero-ledger/tsc/issues)
 
 
