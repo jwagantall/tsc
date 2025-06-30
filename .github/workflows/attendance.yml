@@ -1,0 +1,107 @@
+name: TSC Attendance Audit
+
+on:
+  workflow_dispatch:
+
+env:
+  MEMBERS: |
+    Hendrik Ebbers
+    Richard Bair
+    Leemon Baird
+    Stoyan Panayotov
+    George Spasov
+    Alexander Popowycz
+    Michael Kantor
+    Milan Wiercx van Rhijn
+
+jobs:
+  audit-attendance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run attendance logic
+        run: |
+          echo "Running full TSC attendance audit..."
+
+          # Prepare members list
+          IFS=$'\n' read -d '' -r -a all_members <<< "$MEMBERS"
+
+          declare -A join_dates
+          join_dates["Michael Kantor"]="2025-06-03"
+          join_dates["Milan Wiercx van Rhijn"]="2025-06-03"
+
+          declare -A attendance_history
+          declare -A consecutive_absences
+          declare -A consecutive_presences
+          declare -A suspension_status
+
+          printf "| Date | Member | Present | TSC Count | Required for Quorum | Suspended | Voting Status | Eligible Members | Quorum | Quorum Met | Failed Quorum |\n"
+          printf "|------|--------|---------|-----------|----------------------|-----------|----------------|------------------|--------|-------------|----------------|\n"
+
+          for file in $(ls tsc/minutes/*.md | sort); do
+            date=$(basename "$file" .md)
+            date="${date:0:10}"  # Assumes filename starts with date in YYYY-MM-DD format
+
+            # Determine TSC members valid for the date
+            members=()
+            for member in "${all_members[@]}"; do
+              if [[ -z "${join_dates["$member"]}" ]] || [[ "$date" > "${join_dates["$member"]}" ]] || [[ "$date" == "${join_dates["$member"]}" ]]; then
+                members+=("$member")
+              fi
+            done
+
+            total_members=${#members[@]}
+            required_quorum=$(( (2 * total_members + 2) / 3 ))
+
+            attendees=$(awk '/## TSC Attendees/{flag=1; next} /^## /{flag=0} flag && NF' "$file" | tr -d '*' | sed 's/^ *- *//' | sort)
+            attendees=$(echo "$attendees" | tr -d '\r')
+
+            present_members=0
+            eligible_members=0
+            for member in "${members[@]}"; do
+              present="absent"
+              suspended="${suspension_status["$member"]:-false}"
+
+              if echo "$attendees" | grep -Fqx "$member"; then
+                present="present"
+                consecutive_absences["$member"]=0
+                ((consecutive_presences["$member"]++))
+
+                if [[ "${suspension_status["$member"]}" == "true" && "${consecutive_presences["$member"]}" -ge 2 ]]; then
+                  suspension_status["$member"]="false"
+                  suspended="false"
+                fi
+              else
+                ((consecutive_absences["$member"]++))
+                consecutive_presences["$member"]=0
+                if [[ "${consecutive_absences["$member"]}" -ge 3 ]]; then
+                  suspension_status["$member"]="true"
+                  suspended="true"
+                fi
+              fi
+
+              voting_status="Eligible"
+              if [[ "$suspended" == "true" ]]; then
+                voting_status="Suspended"
+              else
+                ((eligible_members++))
+              fi
+
+              if [[ "$present" == "present" && "$voting_status" == "Eligible" ]]; then
+                ((present_members++))
+              fi
+
+              printf "| %s | %s | %s | %d | %d | %s | %s | - | - | - | - |\n" "$date" "$member" "$present" "$total_members" "$required_quorum" "$suspended" "$voting_status"
+            done
+
+            quorum_met="false"
+            if [[ $present_members -ge $(((2 * eligible_members + 2)/3)) ]]; then
+              quorum_met="true"
+            fi
+
+            printf "| %s | - | - | %d | %d | - | - | %d | %d | %s | %s |\n" "$date" "$total_members" "$required_quorum" "$eligible_members" $(((2 * eligible_members + 2)/3)) "$quorum_met" "$( [[ "$quorum_met" == "false" ]] && echo "true" || echo "false" )"
+            echo ""
+          done
