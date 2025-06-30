@@ -1,123 +1,110 @@
-name: TSC Attendance Report
+name: Generate TSC Meeting Attendance Report
 
 on:
   workflow_dispatch:
 
-env:
-  MEMBERS: |
-    Hendrik Ebbers
-    Richard Bair
-    Leemon Baird
-    Stoyan Panayotov
-    George Spasov
-    Alexander Popowycz
-    Michael Kantor
-    Milan Wiercx van Rhijn
-
 jobs:
-  tsc-attendance:
+  generate-report:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Generate TSC Attendance Table
-        run: |
-          set -e
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
 
-          echo "Parsing TSC attendance..."
+    - name: Install dependencies
+      run: |
+        npm install axios jsdom
 
-          # Step 1: Define member join dates
-          declare -A join_date
-          join_date["Michael Kantor"]="2025-06-03"
-          join_date["Milan Wiercx van Rhijn"]="2025-06-03"
+    - name: Generate attendance report
+      run: |
+        echo "Generating attendance report..."
+        node -e "
+        const axios = require('axios');
+        const jsdom = require('jsdom');
+        const { JSDOM } = jsdom;
+        
+        const MEMBERS = process.env.MEMBERS.split(',');
+        
+        const BASE_URL = 'https://raw.githubusercontent.com/hiero-ledger/tsc/main/minutes/';
+        const MEETING_FILES = [
+          '2023-06-01.md', '2023-06-15.md', '2023-06-29.md' // Example files, add more if needed
+        ];
 
-          # Step 2: Load member list into array
-          IFS=$'\n' read -d '' -r -a all_members <<< "$MEMBERS"
+        async function fetchMeetingData(fileName) {
+          const response = await axios.get(\`\${BASE_URL}\${fileName}\`);
+          const dom = new JSDOM(response.data);
+          const document = dom.window.document;
 
-          # Step 3: Tracking maps
-          declare -A absences
-          declare -A presents
-          declare -A suspension_status
-          declare -A presence_streak
-          declare -A absence_streak
+          const meetingDate = fileName.replace('.md', '');
+          const attendeesSection = document.querySelector('h2:contains(\"TSC Attendees\")')?.parentNode;
 
-          printf "| Date | Member | Present | TSC Count | Quorum Required | Suspended | Voting Status | Eligible Members | Quorum | Quorum Met | Meeting Failed Quorum |\n"
-          printf "|------|--------|---------|-----------|------------------|-----------|----------------|------------------|--------|-------------|------------------------|\n"
+          if (!attendeesSection) return null;
 
-          for file in $(ls tsc/minutes/*.md | sort); do
-            filename=$(basename "$file")
-            date=${filename:0:10}
+          const rows = attendeesSection.querySelectorAll('ul li');
+          const attendanceData = [];
 
-            attendees=$(awk '/## TSC Attendees/{flag=1; next} /^## /{flag=0} flag && NF' "$file" | tr -d '*' | sed 's/^- *//' | tr -d '\r')
-            attendees=$(echo "$attendees" | sort)
+          rows.forEach((row) => {
+            const memberName = row.textContent.trim();
+            const isPresent = MEMBERS.includes(memberName);
+            const status = isPresent ? 'Present' : 'Absent';
 
-            # Step 4: Determine current TSC members
-            current_members=()
-            for member in "${all_members[@]}"; do
-              jd="${join_date[$member]}"
-              if [[ -z "$jd" || "$date" >= "$jd" ]]; then
-                current_members+=("$member")
-              fi
-            done
+            const consecutiveAbsences = getConsecutiveAbsences(memberName);
+            const suspended = consecutiveAbsences >= 3;
 
-            tsc_count=${#current_members[@]}
-            quorum_required=$(( (2 * tsc_count + 2) / 3 ))
+            const votingStatus = suspended ? 'Suspended' : 'Eligible';
+            
+            attendanceData.push({
+              date: meetingDate,
+              member: memberName,
+              present: status,
+              memberCount: MEMBERS.length,
+              quorumRequired: Math.ceil(MEMBERS.length * 2 / 3),
+              suspendedFromVoting: suspended,
+              votingStatus: votingStatus,
+            });
+          });
 
-            eligible_members=0
-            eligible_present=0
+          return attendanceData;
+        }
 
-            # Step 5: Evaluate each member
-            for member in "${current_members[@]}"; do
-              present="absent"
-              suspended="${suspension_status[$member]:-false}"
+        function getConsecutiveAbsences(memberName) {
+          return 0; // Placeholder logic
+        }
 
-              if echo "$attendees" | grep -Fqx "$member"; then
-                present="present"
-                presents["$member"]=$(( ${presents["$member"]:-0} + 1 ))
-                absence_streak["$member"]=0
-                presence_streak["$member"]=$(( ${presence_streak["$member"]:-0} + 1 ))
+        async function generateReport() {
+          let fullAttendanceData = [];
+          
+          for (let fileName of MEETING_FILES) {
+            const meetingData = await fetchMeetingData(fileName);
+            if (meetingData) {
+              fullAttendanceData = [...fullAttendanceData, ...meetingData];
+            }
+          }
 
-                if [[ "$suspended" == "true" && ${presence_streak["$member"]} -ge 2 ]]; then
-                  suspended="false"
-                  suspension_status["$member"]="false"
-                fi
-              else
-                present="absent"
-                absences["$member"]=$(( ${absences["$member"]:-0} + 1 ))
-                presence_streak["$member"]=0
-                absence_streak["$member"]=$(( ${absence_streak["$member"]:-0} + 1 ))
+          console.table(fullAttendanceData);
 
-                if [[ ${absence_streak["$member"]} -ge 3 ]]; then
-                  suspended="true"
-                  suspension_status["$member"]="true"
-                fi
-              fi
+          const totalEligibleVoters = fullAttendanceData.filter(data => data.votingStatus === 'Eligible').length;
+          const quorumRequired = Math.ceil(totalEligibleVoters * 2 / 3);
+          console.log(\`Quorum Required: \${quorumRequired} out of \${totalEligibleVoters} eligible members\`);
 
-              voting_status="Eligible"
-              if [[ "$suspended" == "true" ]]; then
-                voting_status="Suspended"
-              else
-                ((eligible_members++))
-              fi
+          fullAttendanceData.forEach((entry) => {
+            const quorumMet = entry.votingStatus === 'Eligible' && entry.present === 'Present' && totalEligibleVoters >= quorumRequired;
+            const meetingFailedQuorum = !quorumMet;
 
-              if [[ "$present" == "present" && "$voting_status" == "Eligible" ]]; then
-                ((eligible_present++))
-              fi
+            console.log({
+              ...entry,
+              quorumMet,
+              meetingFailedQuorum,
+            });
+          });
+        }
 
-              printf "| %s | %s | %s | %d | %d | %s | %s | - | - | - | - |\n" \
-                "$date" "$member" "$present" "$tsc_count" "$quorum_required" "$suspended" "$voting_status"
-            done
-
-            quorum=$(( (2 * eligible_members + 2) / 3 ))
-            quorum_met="false"
-            failed_quorum="true"
-            if [[ $eligible_present -ge $quorum ]]; then
-              quorum_met="true"
-              failed_quorum="false"
-            fi
-
-            printf "| %s | - | - | %d | %d | - | - | %d | %d | %s | %s |\n\n" \
-              "$date" "$tsc_count" "$quorum_required" "$eligible_members" "$quorum" "$quorum_met" "$failed_quorum"
-          done
+        generateReport();
+        "
+      env:
+        MEMBERS: "Hendrik Ebbers,Richard Bair,Leemon Baird,Stoyan Panayotov,George Spasov,Alexander Popowycz,Michael Kantor,Milan Wiercx van Rhijn"
