@@ -24,19 +24,19 @@ jobs:
 
       - name: Generate TSC Attendance Report
         run: |
-          set -e
+          set -euo pipefail
 
           echo "🔍 Parsing TSC attendance report..."
 
-          # Join dates
+          # Define join dates
           declare -A join_dates
           join_dates["Michael Kantor"]="2025-06-03"
           join_dates["Milan Wiercx van Rhijn"]="2025-06-03"
 
-          # Read members
-          IFS=$'\n' read -d '' -r -a all_members <<< "$MEMBERS"
+          # Parse members
+          mapfile -t all_members <<< "$MEMBERS"
 
-          # Attendance tracking
+          # Initialize state maps
           declare -A absence_streak
           declare -A presence_streak
           declare -A suspended
@@ -45,49 +45,62 @@ jobs:
           printf "| Date | Member | Present | TSC Count | Quorum Required | Suspended | Voting Status | Eligible Members | Quorum | Quorum Met | Meeting Failed Quorum |\n"
           printf "|------|--------|---------|-----------|------------------|-----------|----------------|------------------|--------|-------------|------------------------|\n"
 
-          for file in $(ls tsc/minutes/*.md | sort); do
+          shopt -s nullglob
+          for file in tsc/minutes/*.md; do
             date=$(basename "$file" .md | cut -d'-' -f1-3)
 
-            # Determine TSC members for the date
+            # Determine valid members for this date
             current_members=()
             for member in "${all_members[@]}"; do
-              join_date="${join_dates["$member"]}"
-              if [[ -z "$join_date" || "$date" >= "$join_date" ]]; then
-                current_members+=("$member")
-              fi
+              jd="${join_dates[$member]:-1900-01-01}"
+              [[ "$date" < "$jd" ]] || current_members+=("$member")
             done
 
             tsc_count=${#current_members[@]}
             quorum_required=$(( (2 * tsc_count + 2) / 3 ))
 
-            # Get attendees from section
-            attendees=$(awk '/## TSC Attendees/{flag=1; next} /^## /{flag=0} flag && NF' "$file" | tr -d '*' | sed 's/^ *- *//' | tr -d '\r' | sort)
+            # Extract attendees
+            attendees=$(awk '/## TSC Attendees/{flag=1; next} /^## /{flag=0} flag' "$file" | sed -E 's/^[-*] +//' | tr -d '\r' | sort)
 
             eligible_count=0
-            present_eligible_count=0
+            eligible_present=0
 
             for member in "${current_members[@]}"; do
-              present="absent"
-              voting_status="Eligible"
-              is_suspended="${suspended["$member"]:-false}"
+              is_present="absent"
+              is_suspended="${suspended[$member]:-false}"
 
               if echo "$attendees" | grep -Fqx "$member"; then
-                present="present"
+                is_present="present"
                 presence_streak["$member"]=$(( ${presence_streak["$member"]:-0} + 1 ))
                 absence_streak["$member"]=0
 
-                if [[ "${suspended["$member"]}" == "true" && "${presence_streak["$member"]}" -ge 2 ]]; then
+                # Reinstate if present 2x after suspension
+                if [[ "$is_suspended" == "true" && ${presence_streak["$member"]} -ge 2 ]]; then
                   suspended["$member"]="false"
                   is_suspended="false"
                 fi
               else
                 absence_streak["$member"]=$(( ${absence_streak["$member"]:-0} + 1 ))
                 presence_streak["$member"]=0
-
-                if [[ "${absence_streak["$member"]}" -ge 3 ]]; then
+                if [[ ${absence_streak["$member"]} -ge 3 ]]; then
                   suspended["$member"]="true"
                   is_suspended="true"
                 fi
               fi
 
-              if [[ "$is_suspended" ==_]()]()
+              voting_status="Eligible"
+              [[ "$is_suspended" == "true" ]] && voting_status="Suspended" || ((eligible_count++))
+              [[ "$is_present" == "present" && "$voting_status" == "Eligible" ]] && ((eligible_present++))
+
+              printf "| %s | %s | %s | %d | %d | %s | %s | - | - | - | - |\n" \
+                "$date" "$member" "$is_present" "$tsc_count" "$quorum_required" "$is_suspended" "$voting_status"
+            done
+
+            quorum=$(( (2 * eligible_count + 2) / 3 ))
+            quorum_met="false"
+            [[ $eligible_present -ge $quorum ]] && quorum_met="true"
+            meeting_failed_quorum=$( [[ "$quorum_met" == "false" ]] && echo "true" || echo "false" )
+
+            printf "| %s | - | - | %d | %d | - | - | %d | %d | %s | %s |\n\n" \
+              "$date" "$tsc_count" "$quorum_required" "$eligible_count" "$quorum" "$quorum_met" "$meeting_failed_quorum"
+          done
