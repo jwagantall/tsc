@@ -16,7 +16,7 @@ jobs:
           python-version: 3.x
 
       - name: Run attendance tracker
-        run: python track_attendance.py
+        run: python .github/workflows/track_attendance.py
 
       - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
