@@ -31,6 +31,6 @@ jobs:
       - name: Post summary as comment
         uses: peter-evans/create-or-update-comment@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TRACKER_TOKEN }}
           issue-number: ${{ github.event.issue.number || github.run_id }}
           body-file: attendance_summary.md
