@@ -9,7 +9,7 @@ from collections import defaultdict
 # Constants
 TSC_MEMBERS = [
     "Hendrik Ebbers", "Richard Bair", "Leemon Baird", "Stoyan Panayotov",
-    "George Spasov", "Alexander Popowycz", "Michael Kantor", "Milan Wiercx van Rhijn"
+    "George Spasov", "Alex Popowycz", "Michael Kantor", "Milan Wiercx van Rhijn"
 ]
 QUORUM_THRESHOLD = math.ceil(2 / 3 * len(TSC_MEMBERS))
 MINUTES_DIR = "minutes"
