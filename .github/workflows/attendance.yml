@@ -1,110 +1,36 @@
-name: Generate TSC Meeting Attendance Report
+name: Track TSC Attendance
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger
 
 jobs:
-  generate-report:
+  attendance:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js (version 16 or higher)
-      uses: actions/setup-node@v2
-      with:
-        node-version: '16'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
 
-    - name: Install dependencies
-      run: |
-        npm install axios jsdom
+      - name: Run attendance tracker
+        run: python track_attendance.py
 
-    - name: Generate attendance report
-      run: |
-        echo "Generating attendance report..."
-        node -e "
-        const axios = require('axios');
-        const jsdom = require('jsdom');
-        const { JSDOM } = jsdom;
-        
-        const MEMBERS = process.env.MEMBERS.split(',');
-        
-        const BASE_URL = 'https://raw.githubusercontent.com/hiero-ledger/tsc/main/minutes/';
-        const MEETING_FILES = [
-          '2023-06-01.md', '2023-06-15.md', '2023-06-29.md' // Example files, add more if needed
-        ];
+      - name: Upload CSV artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsc-attendance-report
+          path: tsc_attendance_tracker.csv
+  
+      - name: Generate Markdown summary
+        run: |
+          python track_attendance.py --markdown > attendance_summary.md
 
-        async function fetchMeetingData(fileName) {
-          const response = await axios.get(\`\${BASE_URL}\${fileName}\`);
-          const dom = new JSDOM(response.data);
-          const document = dom.window.document;
-
-          const meetingDate = fileName.replace('.md', '');
-          const attendeesSection = document.querySelector('h2:contains(\"TSC Attendees\")')?.parentNode;
-
-          if (!attendeesSection) return null;
-
-          const rows = attendeesSection.querySelectorAll('ul li');
-          const attendanceData = [];
-
-          rows.forEach((row) => {
-            const memberName = row.textContent.trim();
-            const isPresent = MEMBERS.includes(memberName);
-            const status = isPresent ? 'Present' : 'Absent';
-
-            const consecutiveAbsences = getConsecutiveAbsences(memberName);
-            const suspended = consecutiveAbsences >= 3;
-
-            const votingStatus = suspended ? 'Suspended' : 'Eligible';
-            
-            attendanceData.push({
-              date: meetingDate,
-              member: memberName,
-              present: status,
-              memberCount: MEMBERS.length,
-              quorumRequired: Math.ceil(MEMBERS.length * 2 / 3),
-              suspendedFromVoting: suspended,
-              votingStatus: votingStatus,
-            });
-          });
-
-          return attendanceData;
-        }
-
-        function getConsecutiveAbsences(memberName) {
-          return 0; // Placeholder logic
-        }
-
-        async function generateReport() {
-          let fullAttendanceData = [];
-          
-          for (let fileName of MEETING_FILES) {
-            const meetingData = await fetchMeetingData(fileName);
-            if (meetingData) {
-              fullAttendanceData = [...fullAttendanceData, ...meetingData];
-            }
-          }
-
-          console.table(fullAttendanceData);
-
-          const totalEligibleVoters = fullAttendanceData.filter(data => data.votingStatus === 'Eligible').length;
-          const quorumRequired = Math.ceil(totalEligibleVoters * 2 / 3);
-          console.log(\`Quorum Required: \${quorumRequired} out of \${totalEligibleVoters} eligible members\`);
-
-          fullAttendanceData.forEach((entry) => {
-            const quorumMet = entry.votingStatus === 'Eligible' && entry.present === 'Present' && totalEligibleVoters >= quorumRequired;
-            const meetingFailedQuorum = !quorumMet;
-
-            console.log({
-              ...entry,
-              quorumMet,
-              meetingFailedQuorum,
-            });
-          });
-        }
-
-        generateReport();
-        "
-      env:
-        MEMBERS: "Hendrik Ebbers,Richard Bair,Leemon Baird,Stoyan Panayotov,George Spasov,Alexander Popowycz,Michael Kantor,Milan Wiercx van Rhijn"
+      - name: Post summary as comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number || github.run_id }}
+          body-file: attendance_summary.md
