@@ -26,7 +26,7 @@ jobs:
   
       - name: Generate Markdown summary
         run: |
-          python track_attendance.py --markdown > attendance_summary.md
+          python github/workflows/track_attendance.py --markdown > attendance_summary.md
 
       - name: Post summary as comment
         uses: peter-evans/create-or-update-comment@v4
