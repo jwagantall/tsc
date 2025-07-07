@@ -91,10 +91,8 @@ profiles:
     #   exclude_team_maintainers: false
     #
     allowed_voters:
-      teams:
-        - tsc
-      users:
-        - jwagantall
+      teams: []
+      users: []
 
     # Periodic status check
     # 
