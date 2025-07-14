@@ -220,7 +220,7 @@ profiles:
       discussions:
         category: announcements
   # Voter profile: All TSC members, 1 hour long, 75% pass threshold
-  tsclong:
+  tsc-long:
     duration: 1h
     pass_threshold: 75
     allowed_voters:
