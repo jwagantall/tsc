@@ -235,7 +235,10 @@ profiles:
   # Voter profile: All TSC members, 3 days long, 50% pass threshold
   tscprojectproposal:
     duration: 14d
-    pass_threshold: 50
+    pass_threshold: 50.01
+    pass_threshold_base:
+      votes_cast:
+        exclude_abstentions: true
     allowed_voters:
       teams:
         - tsc
